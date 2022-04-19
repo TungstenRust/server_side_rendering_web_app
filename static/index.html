@@ -2,25 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Certifications</title>
+    <title>{{project_name}}</title>
     <link rel="stylesheet" href="static/css/index.css"
     type="text/css">
 </head>
 <body>
-  <h1>Certifications</h1>
+  <h1>{{project_name}}</h1>
   <section class = certs">
+      {{#each certs}}
     <article class = "cert">
-        <h3>Certified DevSecOps Professional</h3>
-        <img src="static/image/cdp.png">
+        <h3>{{this_cert}}</h3>
+        <img src="{{this.image_path}}" />
     </article>
-    <article class = "cert">
-        <h3>Certified DevSecOps Expert</h3>
-        <img src="static/image/cde.png">
-    </article>
-    <article class = "cert">
-        <h3>Certified DevSecOps Architect</h3>
-        <img src="static/image/cda.png">
-    </article>
+  {{/each}}
   </section>
 </body>
 </html>
