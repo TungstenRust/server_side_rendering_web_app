@@ -18,6 +18,7 @@ use crate::models::NewCert;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
+#[derive(Serialize)]
 struct IndexTemplateData {
     project_name: String,
     certs: Vec<self::models::Cert>,
