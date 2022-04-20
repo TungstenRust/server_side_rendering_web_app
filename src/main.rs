@@ -69,7 +69,7 @@ async fn add_cert_form(pool: web::Data<DbPool>, mut parts: Parts) -> Result<Http
         })?;
     Ok(HttpResponse::SeeOther().append_header(http::header::LOCATION).finish())
 }
-async fn cert(hb: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>, cert_id: web::Path<i32>) -> Result<HttpResponse, Error> {
+async fn cert(handlebar: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>, cert_id: web::Path<i32>) -> Result<HttpResponse, Error> {
     let connection = pool.get().expect("Can't get db connection from pool");
 
     let cert_data = web::block(move || certs.filter(id.eq(cert_id.into_inner())).first::<Cert>(&connection))
@@ -107,9 +107,10 @@ async fn main() -> std::io::Result<()> {
                     .show_files_listing(),
             )
             .route("/", web::get().to(index))
-            .route("/cert/{id}", web::get().to(cert))
             .route("/add", web::get().to(add))
-            .route("/add_cert_form", web::post().to(add_cert_form())
+            .route("/add_cert_form", web::post().to(add_cert_form))
+            .route("/cert/{id}", web::get().to(cert))
+
     })
     .bind("127.0.0.1:8080")?
     .run()
