@@ -9,11 +9,12 @@ use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
 use serde::{Serialize};
-use self::models::*;
 use handlebars::Handlebars;
 mod models;
 mod schema;
 use self::schema::certs::dsl::*;
+use crate::models::Cert;
+use crate::models::NewCert;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -22,23 +23,22 @@ struct IndexTemplateData {
     certs: Vec<self::models::Cert>,
 }
 
-async fn index(handlebar: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>) -> Result<HttpResponse, Error>{
+async fn index(hb: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>) -> Result<HttpResponse, Error>{
     let connection = pool.get()
         .expect("Can't get db connection from pool!");
-    let certs_data = web::block(move || certs_limit(10).load::<Cert>(&connection))
+    let certs_data = web::block(move || { certs.limit(10).load::<Cert>(&connection)
+        })
         .await
-        .map_err(|_| {
-            HttpResponse::InternalServerError().finish()
-        })?;
+        .map_err(|_| HttpResponse::InternalServerError().finish())?;
     let data = IndexTemplateData {
-        project_name: "Certifications".to_string(),
+        project_name: "server_side_rendered_my_blogspot".to_string(),
         certs: certs_data,
     };
-    let body = handlebar.render("index", &data).unwrap();
-    Ok(HttpResponse::Ok()).body(body)
+    let body = hb.render("index", &data).unwrap();
+    Ok(HttpResponse::Ok().body(body))
     }
 
-async fn add(handlebar:web::Data<Handlebars<'_>>) -> Result<HttpResponse, Error>{
+async fn add(hb:web::Data<Handlebars<'_>>) -> Result<HttpResponse, Error>{
     let body = hb.render("add", &{}).unwrap();
     Ok(HttpResponse::Ok().body(body))
 }
@@ -68,7 +68,7 @@ async fn add_cert_form(pool: web::Data<DbPool>, mut parts: Parts) -> Result<Http
         })?;
     Ok(HttpResponse::SeeOther().append_header(http::header::LOCATION).finish())
 }
-async fn cert(handlebar: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>, cert_id: web::Path<i32>) -> Result<HttpResponse, Error> {
+async fn cert(hb: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>, cert_id: web::Path<i32>) -> Result<HttpResponse, Error> {
     let connection = pool.get().expect("Can't get db connection from pool");
 
     let cert_data = web::block(move || certs.filter(id.eq(cert_id.into_inner())).first::<Cert>(&connection))
@@ -77,7 +77,7 @@ async fn cert(handlebar: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>, cer
             HttpResponse::InternalServerError().finish()
         })?;
 
-    let body = handlebar.render("cert", &cert_data).unwrap();
+    let body = hb.render("cert", &cert_data).unwrap();
 
     Ok(HttpResponse::Ok().body(body))
 }
