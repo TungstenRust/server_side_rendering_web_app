@@ -17,20 +17,19 @@ use self::schema::certs::dsl::*;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-#[derive(Serialize)]
 struct IndexTemplateData {
     project_name: String,
-    certs: Vec<self::models::Cert>
+    certs: Vec<self::models::Cert>,
 }
 
-async fn index(handlebar:web::Data<Handlebars<'_>>, pool: web::Data<DbPool>) -> Result<HttpResponse, Error>{
+async fn index(handlebar: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>) -> Result<HttpResponse, Error>{
     let connection = pool.get()
         .expect("Can't get db connection from pool!");
-    let certs_data = web::block(move|| {
-        certs_limit(10).load::<Cert>(&Connection)
-    })
+    let certs_data = web::block(move || certs_limit(10).load::<Cert>(&connection))
         .await
-        .map_err(|_| {HttpResponse::InternalServerError().finish()})?;
+        .map_err(|_| {
+            HttpResponse::InternalServerError().finish()
+        })?;
     let data = IndexTemplateData {
         project_name: "Certifications".to_string(),
         certs: certs_data,
@@ -100,8 +99,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move ||{
         App::new()
             .app_data(handlebars_ref.clone())
-            //.data(pool.clone())-->deprecated insecure
-            .app_data(pool::new(clone()))
+            .data(pool.clone())//-->deprecated insecure
+            //.app_data(pool::new(val))
             .service(
                 Files::new("/static", "static")
                     .show_files_listing(),
