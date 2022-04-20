@@ -6,3 +6,9 @@ pub struct Cert {
     pub name: String,
     pub image_path:String
 }
+#[derive(Insertable, Serialize, Deserialize)]
+#[table_name = "certs"]
+pub struct NewCert {
+    pub name: String,
+    pub image_path: String
+}
