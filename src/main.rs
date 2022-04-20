@@ -44,20 +44,20 @@ async fn add(handlebar:web::Data<Handlebars<'_>>) -> Result<HttpResponse, Error>
     Ok(HttpResponse::Ok().body(body))
 }
 async fn add_cert_form(pool: web::Data<DbPool>, mut parts: Parts) -> Result<HttpResponse, Error> {
-
-    let file_path =
-        parts.files
+    let file_path = parts
+            .files
             .take("image")
             .pop()
             .and_then(|f| f.persist_in("./static/image").ok())
             .unwrap_or_default();
     let text_fields: HashMap<_, _> = parts.texts.as_pairs().into_iter().collect();
-    let connection = pool.get().expect("Can't get db connection from pool");
+    let connection = pool
+        .get()
+        .expect("Can't get db connection from pool");
     let new_cert = NewCert {
         name: text_fields.get("name").unwrap().to_string(),
         image_path: file_path.to_string_lossy().to_string()
     };
-
     web::block(move ||
         diesel::insert_into(certs)
             .values(&new_cert)
@@ -67,7 +67,7 @@ async fn add_cert_form(pool: web::Data<DbPool>, mut parts: Parts) -> Result<Http
         .map_err(|_| {
             HttpResponse::InternalServerError().finish()
         })?;
-    Ok(HttpResponse::SeeOther().append_header(http::header::LOCATION, "/").finish())
+    Ok(HttpResponse::SeeOther().append_header(http::header::LOCATION).finish())
 }
 async fn cert(hb: web::Data<Handlebars<'_>>, pool: web::Data<DbPool>, cert_id: web::Path<i32>) -> Result<HttpResponse, Error> {
     let connection = pool.get().expect("Can't get db connection from pool");
@@ -107,7 +107,9 @@ async fn main() -> std::io::Result<()> {
                     .show_files_listing(),
             )
             .route("/", web::get().to(index))
+            .route("/cert/{id}", web::get().to(cert))
             .route("/add", web::get().to(add))
+            .route("/add_cert_form", web::post().to(add_cert_form())
     })
     .bind("127.0.0.1:8080")?
     .run()

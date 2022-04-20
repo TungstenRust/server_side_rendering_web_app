@@ -13,3 +13,4 @@ serde_json = "1.0.79"
 handlebars = {version="4.2.2", features=["dir_source"]}
 diesel = {version = "1.4.8", features =["postgres", "r2d2"]}
 r2d2 = "0.8.9"
+awmp = "0.8.1"
